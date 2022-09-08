@@ -60,14 +60,19 @@ app.post("/workflow", cors(), async (req, res) => {
     },
     referrer: "https://play.orkes.io/",
     referrerPolicy: "strict-origin",
-    body: `{"name":"VisualImageSearch","version":"13","correlationId":"","input":{"imageUrl":"${url}"}}`,
+    body: JSON.stringify({
+      name: "VisualImageSearch",
+      version: "13",
+      correlationId: "",
+      input: { imageUrl: url },
+    }),
     method: "POST",
     mode: "cors",
     credentials: "include",
   });
 
   const data = await response.text();
-  console.log("Workflow Result =====", data);
+  console.log("Workflow Result =====", data, url);
 
   res.send(data);
 });
