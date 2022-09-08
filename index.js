@@ -45,7 +45,9 @@ const getWorkflowByCorrelationId = async ({
   token,
 }) => {
   const response = await fetch(
-    `${BASE_URL}/workflow/${workflowName}/correlated/${correlationId}?includeClosed=false&includeTasks=false`,
+    `${BASE_URL}/workflow/search?${new URLSearchParams({
+      query: `correlationId='${correlationId}' AND status='COMPLETED' AND workflowType='${workflowName}'`,
+    })}`,
     {
       headers: {
         "x-authorization": token,
@@ -62,7 +64,7 @@ const getWorkflowByCorrelationId = async ({
     data
   );
 
-  return data;
+  return data?.results;
 };
 
 app.post("/workflow", cors(), async (req, res) => {
