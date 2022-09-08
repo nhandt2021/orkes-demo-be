@@ -83,6 +83,53 @@ app.post("/workflow", cors(), async (req, res) => {
   return res.sendStatus(400);
 });
 
+app.post("/videoWorkflow", cors(), async (req, res) => {
+  const { url } = req.body;
+
+  if (url) {
+    const response = await fetch("https://play.orkes.io/api/workflow", {
+      headers: {
+        accept: "*/*",
+        "accept-language": "en-US,en;q=0.9",
+        "cache-control": "no-cache",
+        "content-type": "application/json",
+        pragma: "no-cache",
+        "sec-ch-ua":
+          '"Google Chrome";v="105", "Not)A;Brand";v="8", "Chromium";v="105"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"macOS"',
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-origin",
+        "x-authorization": req.headers["x-authorization"],
+      },
+      referrer: "https://play.orkes.io/",
+      referrerPolicy: "strict-origin",
+      body: JSON.stringify({
+        name: "video_thumbnail_generator",
+        version: "1",
+        correlationId: "",
+        input: {
+          fileLocation: url,
+          outputFileFormat: "png",
+        },
+      }),
+      method: "POST",
+      mode: "cors",
+      credentials: "include",
+    });
+
+    const data = await response.text();
+    console.log("videoWorkflow Result =====", data, url);
+
+    return res.send(data);
+  }
+
+  console.log("videoWorkflow Bad request =====", req.body);
+
+  return res.sendStatus(400);
+});
+
 app.listen(port, () =>
   console.log(`Hello world app listening on port ${port}!`)
 );
