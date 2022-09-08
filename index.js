@@ -45,21 +45,22 @@ const getWorkflowByCorrelationId = async ({
   token,
 }) => {
   const response = await fetch(
-    `${BASE_URL}/workflow/${workflowName}/correlated/${correlationId}`,
+    `${BASE_URL}/workflow/${workflowName}/correlated/${correlationId}?includeClosed=false&includeTasks=false`,
     {
       headers: {
         "x-authorization": token,
       },
-      referrer: "https://play.orkes.io/",
-      referrerPolicy: "strict-origin",
       method: "GET",
-      mode: "cors",
-      credentials: "include",
     }
   );
 
   const data = await response.json();
-  console.log("getWorkflowByCorrelationId Result =====", data);
+  console.log(
+    "getWorkflowByCorrelationId Result =====",
+    workflowName,
+    correlationId,
+    data
+  );
 
   return data;
 };
@@ -75,7 +76,7 @@ app.post("/workflow", cors(), async (req, res) => {
       token: req.headers["x-authorization"],
     });
 
-    if (Array.isArray(workflows) && workflows.length) {
+    if (Array.isArray(workflows) && workflows.length > 0) {
       return res.send(workflows[0].workflowId);
     }
 
@@ -130,7 +131,12 @@ app.post("/videoWorkflow", cors(), async (req, res) => {
       token: req.headers["x-authorization"],
     });
 
-    if (Array.isArray(workflows) && workflows.length) {
+    console.log(
+      "Ket qua gi day===========: ",
+      Array.isArray(workflows) && workflows.length > 0
+    );
+
+    if (Array.isArray(workflows) && workflows.length > 0) {
       return res.send(workflows[0].workflowId);
     }
 
