@@ -3,11 +3,23 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import fetch from "node-fetch";
 import md5 from "md5";
+import {
+  orkesConductorClient,
+  WorkflowExecutor,
+} from "@io-orkes/conductor-javascript";
 
 const app = express();
 const port = 3000;
 
 const BASE_URL = "https://play.orkes.io/api";
+
+const clientPromise = orkesConductorClient({
+  keyId: "1762bb98-6752-4f39-958e-7197aceed947", // optional
+  keySecret: "fqEOEjla1Dm8KFJ8uTSMqmeYTw6aR2hwktd81RsZdkiSMcXB", // optional
+  serverUrl: "https://orkesdev.orkesconductor.com/api",
+});
+
+const client = await clientPromise;
 
 app.use(cors());
 
@@ -192,50 +204,47 @@ app.post("/videoWorkflow", cors(), async (req, res) => {
   return res.sendStatus(400);
 });
 
-app.post("/run-workflow", cors(), async (req, res) => {
-  const { host, workflowName, workflowVersion } = req.body;
-  const path = host ? `${host}/api` : BASE_URL;
+app.get("/workflow-exe/:id", cors(), async (req, res) => {
+  const { id } = req.params;
 
-  if (workflowName) {
-    const response = await fetch(`${path}/workflow`, {
-      headers: {
-        accept: "*/*",
-        "accept-language": "en-US,en;q=0.9",
-        "cache-control": "no-cache",
-        "content-type": "application/json",
-        pragma: "no-cache",
-        "sec-ch-ua":
-          '"Google Chrome";v="105", "Not)A;Brand";v="8", "Chromium";v="105"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"macOS"',
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "same-origin",
-        "x-authorization": req.headers["x-authorization"],
-      },
-      referrer: host || "https://play.orkes.io/",
-      referrerPolicy: "strict-origin",
-      body: JSON.stringify({
-        name: workflowName,
-        version: workflowVersion,
-        correlationId: "orkes-demo",
-      }),
-      method: "POST",
-      mode: "cors",
-      credentials: "include",
-    });
+  try {
+    const executor = new WorkflowExecutor(client);
+    // Query Workflow status
+    const workflowStatus = await executor.getWorkflow(id, true);
+    console.debug("🚀 ~ app.get ~ workflowStatus:", workflowStatus);
 
-    const data = await response.json();
-    console.log("Workflow Result =====", data);
-
-    return res.send(data);
+    return res.send(workflowStatus);
+  } catch (error) {
+    console.debug("🚀 ~ app.get ~ error:", error);
+    return res
+      .status(error?.status || 500)
+      .send(error?.body || { error: error?.message });
   }
-
-  // console.log("Workflow Bad request =====", req.body);
-
-  return res.sendStatus(400);
 });
 
+app.post("/run-workflow", cors(), async (req, res) => {
+  const { workflowName, workflowVersion, url } = req.body;
+
+  try {
+    const executor = new WorkflowExecutor(client);
+    const executionId = await executor.startWorkflow({
+      name: workflowName,
+      version: workflowVersion,
+      input: { url },
+    });
+
+    // Query Workflow status
+    const workflowStatus = await executor.getWorkflow(executionId, true);
+    console.debug("🚀 ~ app.post ~ workflowStatus:", workflowStatus);
+
+    return res.send(workflowStatus);
+  } catch (error) {
+    console.debug("🚀 ~ app.post ~ error:", error);
+    return res
+      .status(error?.status || 500)
+      .send(error?.body || { error: error?.message });
+  }
+});
 
 app.listen(port, () =>
   console.log(`Hello world app listening on port ${port}!`)
