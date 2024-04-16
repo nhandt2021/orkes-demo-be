@@ -16,28 +16,25 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.options("*", cors()); // enable pre-flight request for DELETE request
-app.get("/workflow/:name/:id", cors(), async (req, res) => {
-  const { name, version } = req.params;
+app.get("/workflow/:id", cors(), async (req, res) => {
+  const { id } = req.params;
   const { host } = req.query;
 
   const path = host ? `${host}/api` : BASE_URL;
 
   // https://play.orkes.io/execution/f9a9d984-2e51-11ed-85d6-da345edc3cc9?tabIndex=4
-  const response = await fetch(
-    `${path}/workflow/${name}${version ? "/" + version : ""}`,
-    {
-      headers: {
-        accept: "*/*",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "same-origin",
-        "x-authorization": req.headers["x-authorization"],
-      },
-      referrerPolicy: "strict-origin",
-      method: "GET",
-      mode: "cors",
-      credentials: "include",
-    }
-  );
+  const response = await fetch(`${path}/workflow/${id}`, {
+    headers: {
+      accept: "*/*",
+      "sec-fetch-mode": "cors",
+      "sec-fetch-site": "same-origin",
+      "x-authorization": req.headers["x-authorization"],
+    },
+    referrerPolicy: "strict-origin",
+    method: "GET",
+    mode: "cors",
+    credentials: "include",
+  });
 
   const data = await response.json();
   // console.log("Result =====", data, req.params);
@@ -191,6 +188,50 @@ app.post("/videoWorkflow", cors(), async (req, res) => {
   }
 
   // console.log("videoWorkflow Bad request =====", req.body);
+
+  return res.sendStatus(400);
+});
+
+app.post("/run-workflow", cors(), async (req, res) => {
+  const { host, workflowName, workflowVersion } = req.body;
+  const path = host ? `${host}/api` : BASE_URL;
+
+  if (workflowName) {
+    const response = await fetch(`${path}/workflow`, {
+      headers: {
+        accept: "*/*",
+        "accept-language": "en-US,en;q=0.9",
+        "cache-control": "no-cache",
+        "content-type": "application/json",
+        pragma: "no-cache",
+        "sec-ch-ua":
+          '"Google Chrome";v="105", "Not)A;Brand";v="8", "Chromium";v="105"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"macOS"',
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-origin",
+        "x-authorization": req.headers["x-authorization"],
+      },
+      referrer: host || "https://play.orkes.io/",
+      referrerPolicy: "strict-origin",
+      body: JSON.stringify({
+        name: workflowName,
+        version: workflowVersion,
+        correlationId: "orkes-demo",
+      }),
+      method: "POST",
+      mode: "cors",
+      credentials: "include",
+    });
+
+    const data = await response.json();
+    console.log("Workflow Result =====", data);
+
+    return res.send(data);
+  }
+
+  // console.log("Workflow Bad request =====", req.body);
 
   return res.sendStatus(400);
 });
