@@ -17,10 +17,12 @@ app.use(bodyParser.json());
 
 app.options("*", cors()); // enable pre-flight request for DELETE request
 app.get("/workflow/:id", cors(), async (req, res) => {
-  const { id } = req.params;
+  const { id, host } = req.params;
+
+  const path = host ? `${host}/api` : BASE_URL;
 
   // https://play.orkes.io/execution/f9a9d984-2e51-11ed-85d6-da345edc3cc9?tabIndex=4
-  const response = await fetch(`${BASE_URL}/workflow/${id}`, {
+  const response = await fetch(`${path}/workflow/${id}`, {
     headers: {
       accept: "*/*",
       "sec-fetch-mode": "cors",
@@ -43,9 +45,12 @@ const getWorkflowByCorrelationId = async ({
   workflowName,
   correlationId,
   token,
+  host,
 }) => {
+  const path = host ? `${host}/api` : BASE_URL;
+
   const response = await fetch(
-    `${BASE_URL}/workflow/search?${new URLSearchParams({
+    `${path}/workflow/search?${new URLSearchParams({
       query: `correlationId='${correlationId}' AND status='COMPLETED' AND workflowType='${workflowName}'`,
     })}`,
     {
@@ -68,14 +73,15 @@ const getWorkflowByCorrelationId = async ({
 };
 
 app.post("/workflow", cors(), async (req, res) => {
-  const { url } = req.body;
+  const { url, host, workflowName, workflowVersion } = req.body;
 
   if (url) {
     const urlMD5 = md5(url);
     const workflows = await getWorkflowByCorrelationId({
-      workflowName: "VisualImageSearch",
+      workflowName: workflowName || "VisualImageSearch",
       correlationId: urlMD5,
       token: req.headers["x-authorization"],
+      host,
     });
 
     if (Array.isArray(workflows) && workflows.length > 0) {
@@ -101,10 +107,10 @@ app.post("/workflow", cors(), async (req, res) => {
       referrer: "https://play.orkes.io/",
       referrerPolicy: "strict-origin",
       body: JSON.stringify({
-        name: "VisualImageSearch",
-        version: "13",
+        name: workflowName || "VisualImageSearch",
+        version: workflowVersion || "13",
         correlationId: urlMD5,
-        input: { imageUrl: url },
+        input: url ? { imageUrl: url } : {},
       }),
       method: "POST",
       mode: "cors",
@@ -184,6 +190,7 @@ app.post("/videoWorkflow", cors(), async (req, res) => {
 
   return res.sendStatus(400);
 });
+
 
 app.listen(port, () =>
   console.log(`Hello world app listening on port ${port}!`)
