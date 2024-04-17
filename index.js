@@ -9,7 +9,7 @@ import {
 } from "@io-orkes/conductor-javascript";
 
 const app = express();
-const port = 3000;
+const port = 3001;
 
 const BASE_URL = "https://play.orkes.io/api";
 
@@ -223,14 +223,14 @@ app.get("/workflow-exe/:id", cors(), async (req, res) => {
 });
 
 app.post("/run-workflow", cors(), async (req, res) => {
-  const { workflowName, workflowVersion, url } = req.body;
+  const { workflowName, workflowVersion, url, ua1, ua2 } = req.body;
 
   try {
     const executor = new WorkflowExecutor(client);
     const executionId = await executor.startWorkflow({
       name: workflowName,
       version: workflowVersion,
-      input: { url },
+      input: { url, ua1, ua2 },
     });
 
     // Query Workflow status
