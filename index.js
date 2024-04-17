@@ -234,8 +234,7 @@ app.post("/run-workflow", cors(), async (req, res) => {
     });
 
     // Query Workflow status
-    const workflowStatus = await executor.getWorkflow(executionId, true);
-    console.debug("🚀 ~ app.post ~ workflowStatus:", workflowStatus);
+    const workflowStatus = await executor.getWorkflow(executionId, true);    
 
     return res.send(workflowStatus);
   } catch (error) {
