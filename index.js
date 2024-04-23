@@ -12,11 +12,13 @@ const app = express();
 const port = 3001;
 
 const BASE_URL = "https://play.orkes.io/api";
+const keyId = "ad5723d0-1b38-4c81-b6dd-b3df273d73d2";
+const keySecret = "15xoKsXFbOMtcdbyQCjWghxMrb1EC1A2rta4sxIkwVFQ3rFW";
 
 const clientPromise = orkesConductorClient({
-  keyId: "1762bb98-6752-4f39-958e-7197aceed947", // optional
-  keySecret: "fqEOEjla1Dm8KFJ8uTSMqmeYTw6aR2hwktd81RsZdkiSMcXB", // optional
-  serverUrl: "https://orkesdev.orkesconductor.com/api",
+  keyId, // optional
+  keySecret, // optional
+  serverUrl: BASE_URL,
 });
 
 const client = await clientPromise;
@@ -49,7 +51,6 @@ app.get("/workflow/:id", cors(), async (req, res) => {
   });
 
   const data = await response.json();
-  // console.log("Result =====", data, req.params);
 
   return res.send(data);
 });
@@ -75,12 +76,6 @@ const getWorkflowByCorrelationId = async ({
   );
 
   const data = await response.json();
-  console.log(
-    "getWorkflowByCorrelationId Result =====",
-    workflowName,
-    correlationId,
-    data
-  );
 
   return data?.results;
 };
@@ -131,12 +126,9 @@ app.post("/workflow", cors(), async (req, res) => {
     });
 
     const data = await response.text();
-    // console.log("Workflow Result =====", data, url);
 
     return res.send(data);
   }
-
-  // console.log("Workflow Bad request =====", req.body);
 
   return res.sendStatus(400);
 });
@@ -151,11 +143,6 @@ app.post("/videoWorkflow", cors(), async (req, res) => {
       correlationId: urlMD5,
       token: req.headers["x-authorization"],
     });
-
-    console.log(
-      "Ket qua gi day===========: ",
-      Array.isArray(workflows) && workflows.length > 0
-    );
 
     if (Array.isArray(workflows) && workflows.length > 0) {
       return res.send(workflows[0].workflowId);
@@ -194,12 +181,9 @@ app.post("/videoWorkflow", cors(), async (req, res) => {
     });
 
     const data = await response.text();
-    console.log("videoWorkflow Result =====", data, url);
 
     return res.send(data);
   }
-
-  // console.log("videoWorkflow Bad request =====", req.body);
 
   return res.sendStatus(400);
 });
@@ -211,11 +195,9 @@ app.get("/workflow-exe/:id", cors(), async (req, res) => {
     const executor = new WorkflowExecutor(client);
     // Query Workflow status
     const workflowStatus = await executor.getWorkflow(id, true);
-    console.debug("🚀 ~ app.get ~ workflowStatus:", workflowStatus);
 
     return res.send(workflowStatus);
   } catch (error) {
-    console.debug("🚀 ~ app.get ~ error:", error);
     return res
       .status(error?.status || 500)
       .send(error?.body || { error: error?.message });
@@ -234,11 +216,10 @@ app.post("/run-workflow", cors(), async (req, res) => {
     });
 
     // Query Workflow status
-    const workflowStatus = await executor.getWorkflow(executionId, true);    
+    const workflowStatus = await executor.getWorkflow(executionId, true);
 
     return res.send(workflowStatus);
   } catch (error) {
-    console.debug("🚀 ~ app.post ~ error:", error);
     return res
       .status(error?.status || 500)
       .send(error?.body || { error: error?.message });
@@ -246,5 +227,5 @@ app.post("/run-workflow", cors(), async (req, res) => {
 });
 
 app.listen(port, () =>
-  console.log(`Hello world app listening on port ${port}!`)
+  console.log(`Orkes demo app listening on port ${port}!`)
 );
